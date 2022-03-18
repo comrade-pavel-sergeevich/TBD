@@ -81,3 +81,24 @@ RIGHT JOIN
 (SELECT n_group/1000 as course, COUNT(*) from student st GROUP BY n_group/1000) as course_all 
 on course_act.course = course_all.course
 WHERE course_act.zanim*1./course_all.count>0.5
+11.
+SELECT n_group
+FROM student
+GROUP BY n_group
+HAVING 1.* COUNT(CASE
+    WHEN score>=4 THEN 1
+    ELSE NULL
+END)/COUNT(*)>=0.6
+12.
+SELECT n_group/1000 as course, COUNT(distinct h.name)
+FROM student as st
+RIGHT JOIN student_hobby as sh on sh.student_id=st.id
+Left JOIN hobby as h on h.id=sh.hobby_id
+GROUP BY n_group/1000
+13.
+SELECT st.id, st.surname, st.name, age, n_group/1000 as course
+FROM student as st
+LEFT JOIN student_hobby as sh on sh.student_id=st.id
+Left JOIN hobby as h on h.id=sh.hobby_id
+WHERE sh.hobby_id is NULL and score=5
+ORDER BY course, age DESC
