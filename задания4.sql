@@ -102,3 +102,147 @@ LEFT JOIN student_hobby as sh on sh.student_id=st.id
 Left JOIN hobby as h on h.id=sh.hobby_id
 WHERE sh.hobby_id is NULL and score=5
 ORDER BY course, age DESC
+14.
+CREATE OR REPLACE VIEW z14 AS
+SELECT distinct st.id, st.name, st.surname,st.address,st.score,st.n_group,st.age FROM
+student st RIGHT JOIN student_hobby sh on st.id=sh.student_id
+WHERE finished_at is null and  1./365*extract(days from (clock_timestamp ( )-sh.started_at))>5
+15.
+SELECT h.name, COUNT(distinct (sh.student_id, sh.hobby_id))-count(*)+count(started_at) as count --> так хитро, потому что студент может заниматься одним хобби в двух кружках сразу, и надо убирать хобби, у которых нет started_at, а то они посчитаются
+FROM hobby h LEFT JOIN student_hobby sh on h.id=sh.hobby_id
+WHERE sh.finished_at is null
+GROUP BY h.name
+16.
+SELECT id FROM(
+SELECT h.id, COUNT(distinct (sh.student_id, sh.hobby_id))-count(*)+count(started_at) as count --> так хитро, потому что студент может заниматься одним хобби в двух кружках сразу, и надо убирать хобби, у которых нет started_at, а то они посчитаются
+FROM hobby h LEFT JOIN student_hobby sh on h.id=sh.hobby_id
+WHERE sh.finished_at is null
+GROUP BY h.id
+ORDER BY count desc limit 1) as foo
+17.
+SELECT * FROM student st RIGHT JOIN (
+Select student_id from student_hobby sh
+RIGHT JOIN(
+SELECT h.id 
+FROM hobby h LEFT JOIN student_hobby sh on h.id=sh.hobby_id
+WHERE sh.finished_at is null
+GROUP BY h.id
+ORDER BY COUNT(distinct (sh.student_id, sh.hobby_id))-count(*)+count(started_at) desc limit 1) as besth on besth.id=sh.hobby_id
+WHERE finished_at is null) as stid on st.id = stid.student_id
+18.
+SELECT id FROM hobby ORDER BY risk desc limit 3
+19.
+SELECT distinct st.id, st.name, st.surname,st.address,st.score,st.n_group,st.age, started_at FROM
+student st RIGHT JOIN student_hobby sh on st.id=sh.student_id
+WHERE finished_at is null
+ORDER BY started_at limit 10
+20.
+SELECT distinct n_group from
+(SELECT distinct st.id, st.name, st.surname,st.address,st.score,st.n_group,st.age, started_at FROM
+student st RIGHT JOIN student_hobby sh on st.id=sh.student_id
+WHERE finished_at is null
+ORDER BY started_at limit 10) as t1
+21.
+CREATE OR REPLACE VIEW z21 AS
+SELECT id, name, surname
+FROM student
+ORDER BY score desc
+22.
+CREATE OR REPLACE VIEW z22 AS
+with tab1 as (SELECT course, h.name, COUNT(*) as cnt
+FROM(
+SELECT distinct course, student_id, hobby_id
+FROM (SELECT st.id, st.n_group/1000 as course FROM student st) as st 
+RIGHT JOIN student_hobby sh on st.id=sh.student_id
+WHERE finished_at is null) as t1 LEFT JOIN hobby h on h.id=t1.hobby_id
+GROUP BY course, name
+ORDER BY cnt desc)
+
+SELECT tab1.course, name
+from tab1 RIGHT JOIN (select course, max(cnt) as max from tab1 group by course) as tab2 on tab1.course=tab2.course and tab1.cnt=tab2.max
+23.
+CREATE OR REPLACE VIEW z23 AS
+with tab1 as
+(
+SELECT distinct hobby_id, count(*)
+FROM student st right join student_hobby sh on st.id = sh.student_id
+WHERE n_group/1000=2 and finished_at is null
+group by hobby_id
+ORDER BY count desc),
+tab2 as(
+SELECT name, risk
+FROM hobby h RIGHT JOIN tab1 on h.id = tab1.hobby_id
+WHERE count = (select count from tab1 limit 1)
+ORDER BY risk desc)
+
+SELECT name
+FROM tab2
+WHERE risk = (SELECT risk from tab2 limit 1)
+24.
+CREATE OR REPLACE VIEW z24 AS
+SELECT n_group/1000 as course, count(*) as vsego, SUM(floor(score)::bigint/5) as otli4niki
+FROM student
+GROUP BY n_group/1000
+25.
+CREATE OR REPLACE VIEW z25 AS
+SELECT name FROM(
+SELECT h.name, COUNT(distinct (sh.student_id, sh.hobby_id))-count(*)+count(started_at) as count --> так хитро, потому что студент может заниматься одним хобби в двух кружках сразу, и надо убирать хобби, у которых нет started_at, а то они посчитаются
+FROM hobby h LEFT JOIN student_hobby sh on h.id=sh.hobby_id
+WHERE sh.finished_at is null
+GROUP BY h.name
+ORDER BY count desc limit 1) as foo
+26.
+CREATE VIEW obnovl as
+SELECT * FROM hobby
+--Пример запроса к ней:
+INSERT INTO obnovl (name, risk)
+VALUES ('плавание', 3)
+27.
+SELECT left(name,1), max(score), avg(score), min(score)
+from student
+group by left(name,1)
+HAVING max(score)>3.6
+28.
+SELECT n_group/1000 as course, surname, max(score),min(score) 
+from student
+group by n_group/1000, surname
+29.
+SELECT age, COUNT(distinct hobby_id)
+FROM student st RIGHT JOIN student_hobby sh on st.id = sh.student_id
+GROUP BY age
+30.
+SELECT left(tab1.name,1), min(risk), max(risk)
+FROM (student st RIGHT JOIN student_hobby sh on st.id = sh.student_id) as tab1 left join hobby h on h.id=tab1.student_id
+GROUP BY left(tab1.name,1)
+31.
+--начиная с этого момента я, наконец, смирился с тем, что нужно создать поле "дата рождения", "возраста" не хватит
+SELECT EXTRACT(MONTH from birth) as month, avg(score)
+from (student st right join student_hobby sh on sh.student_id=st.id) as tab1 left join hobby h on h.id=tab1.hobby_id
+WHERE finished_at is null and h.name='football'
+GROUP BY month
+32.
+SELECT distinct 'Имя: '||name||', фамилия: '||surname||', группа: '||n_group
+from student st right  join student_hobby sh on st.id=sh.student_id
+33.
+SELECT case position('ов' in surname)::varchar
+when '0' then 'не найдено'
+else position('ов' in surname)::varchar
+end
+from student
+34.
+SELECT case 
+when (length(surname)>10) then surname
+else rpad(surname,10,'#')
+end
+from student
+35.
+SELECT rtrim(fam,'#') from(
+SELECT case 
+when (length(surname)>10) then surname
+else rpad(surname,10,'#')
+end as fam
+from student) as tab1
+36.
+SELECT extract(days FROM date_trunc('month', '4-1-2018'::date) + interval '1 month - 1 day');
+37.
+SELECT current_date+7-((cast(extract(dow from current_date) as int))+1)%8;
