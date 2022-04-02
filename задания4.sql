@@ -246,3 +246,10 @@ from student) as tab1
 SELECT extract(days FROM date_trunc('month', '4-1-2018'::date) + interval '1 month - 1 day');
 37.
 SELECT current_date+7-((cast(extract(dow from current_date) as int))+1)%8;
+38.
+Select extract(century from current_date) as century, to_char(current_date, 'IW') as weeknumber, extract(doy from current_date) as daynumber
+39.
+SELECT st.name, st.surname, h.name, case
+when (sh.finished_at is null) then 'Закончил'
+else 'Занимается' end
+FROM student st right join student_hobby sh on st.id=sh.student_id left join hobby h on h.id = sh.hobby_id
