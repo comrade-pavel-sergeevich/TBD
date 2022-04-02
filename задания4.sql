@@ -46,7 +46,7 @@ SELECT h.name as hobby, h.risk, 1/30.*extract( days from (NOW ()-sh.started_at))
 FROM student st
 INNER JOIN student_hobby sh ON st.id = sh.student_id
 INNER JOIN hobby h ON h.id = sh.hobby_id
-WHERE sh.finished_at IS NULL
+WHERE sh.finished_at IS NULL and st.id=5
 ORDER BY sh.started_at
 LIMIT 1
 8.
