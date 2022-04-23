@@ -253,3 +253,7 @@ SELECT st.name, st.surname, h.name, case
 when (sh.finished_at is null) then 'Закончил'
 else 'Занимается' end
 FROM student st right join student_hobby sh on st.id=sh.student_id left join hobby h on h.id = sh.hobby_id
+40.
+SELECT n_group, count(case round(score) when 2 then 1 end) as "2", count(case round(score) when 3 then 1 end) as "3", count(case round(score) when 4 then 1 end) as "4", count(case round(score) when 5 then 1 end) as "5"
+from student
+group by n_group
